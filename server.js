@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
-const HttpsProxyAgent = require('https-proxy-agent');
+const { HttpsProxyAgent } = require('https-proxy-agent');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
