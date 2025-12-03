@@ -1,11 +1,19 @@
 const express = require('express');
 const cors = require('cors');
 const axios = require('axios');
+const HttpsProxyAgent = require('https-proxy-agent');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ⚡ User-Agents rotatifs pour éviter la détection
+// ⚡ WEBSHARE PROXY CONFIG
+const PROXY_HOST = 'p.webshare.io';
+const PROXY_PORT = '80';
+const PROXY_USER = 'vqzxeigc-8';
+const PROXY_PASS = '46ac2rykkjam';
+const PROXY_URL = `http://${PROXY_USER}:${PROXY_PASS}@${PROXY_HOST}:${PROXY_PORT}`;
+
+// ⚡ User-Agents rotatifs
 const userAgents = [
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36',
@@ -18,19 +26,17 @@ function getRandomUserAgent() {
   return userAgents[Math.floor(Math.random() * userAgents.length)];
 }
 
-// ⚡ CORS
 app.use(cors());
 
-// ⚡ Health check
 app.get('/', (req, res) => {
   res.json({ 
     status: 'online', 
-    service: 'Vinted Alert Proxy',
+    service: 'Vinted Alert Proxy PRO',
+    proxy: 'Webshare Residential FR',
     uptime: process.uptime() 
   });
 });
 
-// ⚡ ENDPOINT principal
 app.get('/fetch', async (req, res) => {
   try {
     const targetUrl = req.query.url;
@@ -39,14 +45,14 @@ app.get('/fetch', async (req, res) => {
       return res.status(400).json({ error: 'Missing url parameter' });
     }
 
-    console.log(`📡 Fetching: ${targetUrl}`);
+    console.log(`📡 Fetching via FR proxy: ${targetUrl}`);
 
-    // ⚡ Headers ULTRA furtifs avec User-Agent rotatif
+    // ⚡ FETCH via WEBSHARE PROXY
     const response = await axios.get(targetUrl, {
       headers: {
         'User-Agent': getRandomUserAgent(),
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
-        'Accept-Language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8',
+        'Accept-Language': 'fr-FR,fr;q=0.9',
         'Accept-Encoding': 'gzip, deflate, br',
         'DNT': '1',
         'Connection': 'keep-alive',
@@ -55,14 +61,15 @@ app.get('/fetch', async (req, res) => {
         'Sec-Fetch-Mode': 'navigate',
         'Sec-Fetch-Site': 'none',
         'Sec-Fetch-User': '?1',
-        'Cache-Control': 'max-age=0',
       },
-      timeout: 25000, // 25 secondes
+      httpsAgent: new HttpsProxyAgent(PROXY_URL),
+      proxy: false, // Disable axios default proxy
+      timeout: 30000,
       maxRedirects: 5,
       validateStatus: () => true,
     });
 
-    console.log(`✅ Success: ${response.status}`);
+    console.log(`✅ Success via proxy: ${response.status}`);
 
     res.set('Content-Type', 'text/html');
     res.send(response.data);
@@ -80,5 +87,7 @@ app.get('/fetch', async (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🇫🇷 Using Webshare FR proxy: ${PROXY_HOST}`);
 });
+
 
